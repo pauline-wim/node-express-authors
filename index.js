@@ -1,33 +1,12 @@
 const express = require("express");
 const app = express();
 
-const authors = [
-  {
-    name: "Lawrence Nowell",
-    nationality: "UK",
-    books: ["Beowulf"],
-  },
-  {
-    name: "William Shakespeare",
-    nationality: "UK",
-    books: ["Hamlet", "Othello", "Romeo and Juliet", "MacBeth"],
-  },
-  {
-    name: "Charles Dickens",
-    nationality: "US",
-    books: ["Oliver Twist", "A Christmas Carol"],
-  },
-  {
-    name: "Oscar Wilde",
-    nationality: "UK",
-    books: ["The Picture of Dorian Gray", "The Importance of Being Earnest"],
-  },
-];
+const authors = require("./authors.json");
 
 // ROUTES
 
 // Home
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.send("Authors API");
 });
 
@@ -39,7 +18,7 @@ app.get("/authors/:id", (req, res) => {
   });
 
   if (!author) {
-    return res.send("This author does not exist");
+    return res.send("This author does not exist, enter other ID.");
   }
 
   res.send(`${author.name}, ${author.nationality}`);
@@ -47,47 +26,42 @@ app.get("/authors/:id", (req, res) => {
 
 // Books of one said author
 app.get("/authors/:id/books", (req, res) => {
-  const author = authors.find((_a, i) => {
-    const id = i + 1;
-    return req.params.id === id.toString();
-  });
+  const books = authors[req.params.id - 1].books;
 
-  if (!author) {
-    return res.send("This author does not exist");
+  if (!books) {
+    return res.send("This author can't be found");
   }
 
-  res.send(author.books.toString());
+  res.send(books.join(", "));
 });
 
 // Json route : author
 app.get("/json/authors/:id", (req, res) => {
-  const author = authors.find((_a, i) => {
-    return req.params.id === i.toString();
-  });
+  const author = authors[req.params.id];
 
   if (!author) {
-    return res.send("This ID does not exist");
+    return res.json({ messsage: "This ID does not exist" });
   }
 
-  res.send({ name: author.name, nationality: author.nationality });
+  delete author.books;
+
+  res.json(author);
 });
 
 // Json route : books
 app.get("/json/authors/:id/books", (req, res) => {
-  const author = authors.find((_a, i) => {
-    return req.params.id === i.toString();
-  });
+  const books = authors[req.params.id].books;
 
-  if (!author) {
-    return res.send("This ID does not exist");
+  if (!books) {
+    return res.json({ messsage: "This author can't be found" });
   }
 
-  res.send({ books: author.books });
+  res.json({ books });
 });
 
 // ERROR
 app.get("*", (req, res) => {
-  res.send("Page not found - 404");
+  res.status(404).send("Page not found - 404");
 });
 
 // Listen

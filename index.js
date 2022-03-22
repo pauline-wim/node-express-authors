@@ -43,6 +43,7 @@ app.get("/authors/:id", async (req, res) => {
   //   return res.send("This author does not exist, enter other ID.");
   // }
   // res.send(`${author.name}, ${author.nationality}`);
+
   let authors;
   try {
     authors = await Postgres.query(
@@ -57,43 +58,85 @@ app.get("/authors/:id", async (req, res) => {
     });
   }
 
-  res.json(authors.rows);
+  res.send(`${authors.rows[0].name}, ${authors.rows[0].nationality}`);
 });
 
-// // Books of one said author
-// app.get("/authors/:id/books", (req, res) => {
-//   const books = authors[req.params.id - 1].books;
+// Books of one said author
+app.get("/authors/:id/books", async (req, res) => {
+  // const books = authors[req.params.id - 1].books;
+  // if (!books) {
+  //   return res.send("This author can't be found");
+  // }
 
-//   if (!books) {
-//     return res.send("This author can't be found");
-//   }
+  let books;
+  try {
+    books = await Postgres.query(
+      "SELECT books FROM authors WHERE authors.author_id=$1",
+      [req.params.id]
+    );
+  } catch (err) {
+    console.log(err);
 
-//   res.send(books.join(", "));
-// });
+    return res.status(400).json({
+      message: "An error has occured",
+    });
+  }
 
-// // Json route : author
-// app.get("/json/authors/:id", (req, res) => {
-//   const author = authors[req.params.id];
+  res.send(books.rows[0].books.join(", "));
+});
 
-//   if (!author) {
-//     return res.json({ messsage: "This ID does not exist" });
-//   }
+// Json route : author
+app.get("/json/authors/:id", async (req, res) => {
+  // const author = authors[req.params.id];
+  // if (!author) {
+  //   return res.json({ messsage: "This ID does not exist" });
+  // }
+  // delete author.books;
+  // res.json(author);
 
-//   delete author.books;
+  let authors;
+  try {
+    authors = await Postgres.query(
+      "SELECT * FROM authors WHERE authors.author_id=$1",
+      [req.params.id]
+    );
+  } catch (err) {
+    console.log(err);
 
-//   res.json(author);
-// });
+    return res.status(400).json({
+      message: "An error has occured",
+    });
+  }
 
-// // Json route : books
-// app.get("/json/authors/:id/books", (req, res) => {
-//   const books = authors[req.params.id].books;
+  delete authors.rows[0].books;
 
-//   if (!books) {
-//     return res.json({ messsage: "This author can't be found" });
-//   }
+  res.json(authors.rows[0]);
+});
 
-//   res.json({ books });
-// });
+// Json route : books
+app.get("/json/authors/:id/books", async (req, res) => {
+  // const books = authors[req.params.id].books;
+  // if (!books) {
+  //   return res.json({ messsage: "This author can't be found" });
+  // }
+  // res.json({ books });
+
+  let books;
+  try {
+    books = await Postgres.query(
+      "SELECT books FROM authors WHERE authors.author_id=$1",
+      [req.params.id]
+    );
+  } catch (err) {
+    console.log(err);
+
+    return res.status(400).json({
+      message: "An error has occured",
+    });
+  }
+
+  res.send(books.rows[0]);
+});
 
 // ERROR
 app.get("*", (req, res) => {
